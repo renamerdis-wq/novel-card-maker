@@ -1,12 +1,11 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>노블 카드 생성기 V2</title>
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <title>노블 카드 생성기 V3 (Final)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js"></script>
   <style>
-    /* 폰트 불러오기 */
     @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 
     * { box-sizing: border-box; }
@@ -23,7 +22,7 @@
       color: #333;
     }
 
-    /* --- 컨트롤 패널 (입력창 등) --- */
+    /* --- 컨트롤 패널 --- */
     .control-panel {
       width: 100%;
       padding: 20px;
@@ -78,32 +77,33 @@
     .preview-container {
       padding: 40px 20px;
       width: 100%;
-      overflow-x: auto; /* 카드가 화면보다 크면 스크롤 생김 */
+      overflow-x: auto;
       display: flex;
       justify-content: center;
       background-color: #e2e8f0;
       flex-grow: 1;
     }
 
-    /* 실제 캡처될 영역 */
     #capture-area {
       background: transparent;
-      /* 너비는 JS로 제어됨 */
       transform-origin: top left;
     }
-
   </style>
 </head>
 <body>
 
   <div class="control-panel">
-    <textarea id="htmlInput" placeholder="여기에 HTML 코드를 붙여넣으세요...">
-<div style="padding: 2em; color: #0f172a; font-size: 15px; font-weight: 500; line-height: 1.5; border-radius: 16px; background: linear-gradient(235deg, #fbfdff 0%, #f1f5f9 100%); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.20)">
+    <textarea id="htmlInput" placeholder="HTML 코드를 입력하세요...">
+<div style="padding: 2em; color: #0f172a; font-size: 15px; font-weight: 500; line-height: 1.8; border-radius: 16px; background: linear-gradient(235deg, #fbfdff 0%, #f1f5f9 100%); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.20)">
   <div style="margin-bottom: 1.5em; padding: 1.5em; background: #f8fafc; border-radius: 16px;">
-    <div style="text-align: left; margin-bottom: 0.75em;"><span style="display: inline-block; padding: 6px 14px; background: #0f172a; color: #f5f5f5; border-radius: 20px; font-size: 0.8em; font-weight: 700; letter-spacing: 0.02em;">강철호</span></div>
-    <p style="margin: 0; font-size: 1.8em; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; text-align: left;">새로운 챕터 제목</p>
+    <p style="margin: 0; font-size: 1.2em; font-weight: 800; color: #0f172a; text-align: left;">형광펜 테스트 V3</p>
   </div>
-  <p>여기에 내용을 입력하거나 HTML을 붙여넣으세요.</p>
+  
+  <p style="margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all;">
+    <span style="-webkit-box-decoration-break: clone; box-decoration-break: clone; color: #0ea5e9; background: #e0f2fe; padding: 2px 6px; border-radius: 4px;">
+      “이제는 줄이 바뀌어도 배경색이 떡지지 않고, 줄마다 예쁘게 끊어져서 저장될 겁니다. 엔진을 바꿨거든요.”
+    </span>
+  </p>
 </div>
     </textarea>
     
@@ -116,52 +116,42 @@
   </div>
 
   <div class="preview-container">
-    <div id="capture-area">
-      </div>
+    <div id="capture-area"></div>
   </div>
 
   <script>
-    // 페이지 로드 시 초기 적용
-    window.onload = function() {
-      applyHtml();
-    }
+    window.onload = function() { applyHtml(); }
 
     function applyHtml() {
       const htmlCode = document.getElementById('htmlInput').value;
       const widthVal = document.getElementById('widthInput').value;
       const captureArea = document.getElementById('capture-area');
-
-      // 1. HTML 주입
       captureArea.innerHTML = htmlCode;
-      
-      // 2. 너비 설정
       captureArea.style.width = widthVal + "px";
     }
 
     function saveImage() {
       const element = document.getElementById("capture-area");
-      
-      // 캡처 시작 전 사용자에게 알림 (옵션)
       const saveBtn = document.querySelector('.btn-save');
       const originalText = saveBtn.innerText;
-      saveBtn.innerText = "⏳ 처리중...";
+      
+      saveBtn.innerText = "⏳ 변환 중...";
 
-      html2canvas(element, {
-        scale: 2, // 고화질 (2배)
-        backgroundColor: null, // 투명 배경 지원
-        useCORS: true
-      }).then(canvas => {
-        const image = canvas.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.href = image;
-        link.download = "novel_card_" + new Date().getTime() + ".png"; // 파일명에 시간 추가
-        link.click();
-
-        saveBtn.innerText = originalText; // 버튼 텍스트 복구
-      }).catch(err => {
-        alert("저장 중 오류가 발생했습니다 ㅠㅠ");
-        saveBtn.innerText = originalText;
-      });
+      // html-to-image 라이브러리 사용
+      // pixelRatio: 2 -> 2배 고화질 설정
+      htmlToImage.toPng(element, { pixelRatio: 2 })
+        .then(function (dataUrl) {
+          const link = document.createElement('a');
+          link.download = 'novel_card_' + new Date().getTime() + '.png';
+          link.href = dataUrl;
+          link.click();
+          saveBtn.innerText = originalText;
+        })
+        .catch(function (error) {
+          console.error('oops, something went wrong!', error);
+          alert("저장에 실패했습니다. (아이폰이라면 잠시 후 다시 시도해보세요)");
+          saveBtn.innerText = originalText;
+        });
     }
   </script>
 </body>
