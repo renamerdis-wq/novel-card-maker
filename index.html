@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>노블 카드 생성기 V9 (Merge Feature)</title>
+  <title>노블 카드 생성기 V11 (Custom Style)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js"></script>
   <style>
     @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
@@ -13,7 +13,7 @@
     body {
       margin: 0;
       padding: 0;
-      background-color: #f1f5f9;
+      background-color: #e2e8f0;
       font-family: Pretendard, sans-serif;
       display: flex;
       flex-direction: column;
@@ -32,6 +32,10 @@
       display: flex;
       flex-direction: column;
       gap: 15px;
+      position: sticky;
+      top: 0;
+      max-height: 60vh;
+      overflow-y: auto;
     }
 
     .main-controls {
@@ -39,11 +43,32 @@
       gap: 10px;
       align-items: center;
       flex-wrap: wrap;
-      border-bottom: 2px solid #e2e8f0;
+      border-bottom: 2px solid #f1f5f9;
       padding-bottom: 10px;
-      margin-bottom: 10px;
     }
 
+    /* 스타일 설정 패널 (기본 숨김) */
+    .style-panel {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 15px;
+      border-radius: 8px;
+      display: none; /* 토글로 열림 */
+      flex-direction: column;
+      gap: 10px;
+    }
+    .style-panel.open { display: flex; }
+
+    .style-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: bold;
+      color: #475569;
+    }
+
+    /* 블록 스타일 */
     .block-item {
       background: #fff;
       border: 1px solid #cbd5e1;
@@ -71,62 +96,59 @@
       gap: 5px;
     }
 
-    .block-controls {
-      display: flex;
-      gap: 5px;
-    }
-
     .btn-sm {
       padding: 5px 8px;
-      font-size: 12px;
+      font-size: 11px;
       border-radius: 4px;
       border: 1px solid #cbd5e1;
       background: #f8fafc;
       cursor: pointer;
     }
-    
-    /* 가위/풀 버튼 스타일 */
+    .btn-edit-toggle { background-color: #334155; color: white; border: none; }
     .btn-split { background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd; font-weight: bold; }
     .btn-merge { background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; font-weight: bold; }
+    .btn-strip { background-color: #fff1f2; color: #be123c; border-color: #fda4af; font-weight: bold; }
     .btn-danger { color: #ef4444; border-color: #ef4444; }
 
-    .text-editor {
+    .code-editor {
       width: 100%;
       height: 120px;
       padding: 10px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #334155;
       border-radius: 4px;
       font-family: monospace;
       font-size: 12px;
       resize: vertical;
-      display: block;
+      background: #f8fafc;
+      color: #334155;
+      display: none; 
     }
-    .text-editor.folded { display: none; }
-    
-    .text-preview-snippet {
-      font-size: 12px;
-      color: #94a3b8;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      padding: 8px;
+    .code-editor.active { display: block; }
+
+    .block-preview-box {
+      padding: 10px;
       background: #f1f5f9;
       border-radius: 4px;
+      font-size: 13px;
+      color: #475569;
       cursor: pointer;
+      min-height: 40px;
+      display: none;
     }
+    .block-preview-box.active { display: block; }
 
     .editor-img-preview {
       max-width: 100px;
       max-height: 100px;
       border-radius: 4px;
       border: 1px solid #ddd;
-      display: block;
     }
 
     button { cursor: pointer; border: none; }
     .btn-add-text { background: #334155; color: white; padding: 10px; border-radius: 8px; font-weight: bold; width: 48%; }
     .btn-add-image { background: #f59e0b; color: white; padding: 10px; border-radius: 8px; font-weight: bold; width: 48%; }
     .btn-save { background: #3b82f6; color: white; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px;}
+    .btn-style { background: #64748b; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; }
 
     #imgFileInput { display: none; }
 
@@ -138,20 +160,33 @@
       justify-content: center;
       background-color: #e2e8f0;
       flex-grow: 1;
+      padding-bottom: 100px;
     }
 
     #capture-area { background: transparent; transform-origin: top left; }
 
-    .card-base {
-      padding: 2em; 
-      color: #0f172a; 
-      font-size: 15px; 
-      font-weight: 500; 
-      line-height: 1.8; 
+    /* 기본 프레임 (JS로 스타일 덮어씌움) */
+    .card-frame {
       border-radius: 16px; 
-      background: linear-gradient(235deg, #fbfdff 0%, #f1f5f9 100%); 
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.20);
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      /* 초기값 */
+      padding: 2em;
+      background: linear-gradient(235deg, #fbfdff 0%, #f1f5f9 100%);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.20);
+      color: #0f172a;
+    }
+
+    .text-part p { margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all; line-height: 1.8; }
+    
+    .highlight-span {
+      -webkit-box-decoration-break: clone; 
+      box-decoration-break: clone; 
+      color: #0ea5e9; 
+      background: #e0f2fe; 
+      padding: 2px 6px; 
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -159,8 +194,32 @@
 
   <div class="editor-area">
     <div class="main-controls">
-      <span style="font-size: 13px; font-weight: bold;">카드 폭:</span>
-      <input type="number" id="cardWidthInput" value="900" step="10" style="width:60px; padding:5px; border:1px solid #ccc; border-radius:4px;"> px
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size: 13px; font-weight: bold;">카드 폭:</span>
+        <input type="number" id="cardWidthInput" value="900" step="10" style="width:60px; padding:5px; border:1px solid #ccc; border-radius:4px;"> px
+      </div>
+      <div style="flex-grow:1"></div>
+      <button class="btn-style" onclick="toggleStylePanel()">🎨 스타일 꾸미기 ▼</button>
+    </div>
+
+    <div id="stylePanel" class="style-panel">
+      <div class="style-row">
+        <span>배경 시작색 (위):</span>
+        <input type="color" id="bgColor1" value="#fbfdff" onchange="updateCardStyle()">
+      </div>
+      <div class="style-row">
+        <span>배경 끝색 (아래):</span>
+        <input type="color" id="bgColor2" value="#f1f5f9" onchange="updateCardStyle()">
+      </div>
+      <div class="style-row">
+        <span>여백 (Padding):</span>
+        <input type="range" id="paddingRange" min="10" max="60" value="32" oninput="updateCardStyle()">
+        <span id="paddingVal" style="font-weight:normal; width:30px; text-align:right;">32px</span>
+      </div>
+      <div class="style-row">
+        <span>글자색:</span>
+        <input type="color" id="textColor" value="#0f172a" onchange="updateCardStyle()">
+      </div>
     </div>
 
     <div id="block-list"></div>
@@ -179,15 +238,23 @@
   </div>
 
   <script>
+    // 스타일 설정값
+    let cardStyle = {
+      color1: '#fbfdff',
+      color2: '#f1f5f9',
+      padding: 32,
+      textColor: '#0f172a'
+    };
+
     let blocks = [
       {
         type: 'text',
-        content: `<div style="margin-bottom: 1.5em; padding: 1.5em; background: #f8fafc; border-radius: 16px;">
-  <p style="margin: 0; font-size: 1.2em; font-weight: 800; color: #0f172a;">풀칠 기능 추가됨!</p>
-</div>
-<p>이 블록을 잘랐다가 다시 합쳐보세요.</p>
-<p>가위 버튼을 누르면 잘리고, 풀칠 버튼을 누르면 위랑 합쳐집니다.</p>`,
-        isOpen: true 
+        // 일부러 겉포장(div)이 있는 예시를 넣음
+        content: `<div style="background:#eee; padding:10px;">
+  <p style="font-weight:bold;">이 박스는 잘못 복사된 겉포장입니다.</p>
+  <p>'포장지 제거' 버튼을 눌러보세요.</p>
+</div>`,
+        isEditMode: false 
       }
     ];
 
@@ -201,7 +268,6 @@
         const div = document.createElement('div');
         div.className = `block-item ${block.type === 'text' ? 'text-block' : 'image-block'}`;
         
-        // 이전 블록이 텍스트인지 확인 (풀칠 버튼 표시 조건)
         const canMergeUp = index > 0 && blocks[index-1].type === 'text' && block.type === 'text';
 
         let innerHTML = `
@@ -221,40 +287,66 @@
         if (block.type === 'text') {
           innerHTML += `
             <div style="margin-bottom:5px; display:flex; justify-content:flex-end; gap:5px; flex-wrap:wrap;">
-               ${canMergeUp ? `<button class="btn-sm btn-merge" onclick="mergeUp(${index})">🧴 풀칠하기 (위와 합체)</button>` : ''}
-               ${block.isOpen ? `<button class="btn-sm btn-split" onmousedown="splitBlock(event, ${index})">✂️ 자르기</button>` : ''}
-               <button class="btn-sm" onclick="toggleFold(${index})">
-                 ${block.isOpen ? '🔼 접기' : '🔽 펼치기'}
+               ${block.isEditMode ? `<button class="btn-sm btn-strip" onclick="stripWrapper(${index})">📦 포장지 제거</button>` : ''}
+               
+               ${canMergeUp ? `<button class="btn-sm btn-merge" onclick="mergeUp(${index})">🧴 풀칠</button>` : ''}
+               ${block.isEditMode ? `<button class="btn-sm btn-split" onmousedown="splitBlock(event, ${index})">✂️ 자르기</button>` : ''}
+               
+               <button class="btn-sm btn-edit-toggle" onclick="toggleEditMode(${index})">
+                 ${block.isEditMode ? '👁️ 미리보기(완료)' : '✏️ 코드수정(펼치기)'}
                </button>
             </div>
-            ${!block.isOpen ? `<div class="text-preview-snippet" onclick="toggleFold(${index})">${block.content.substring(0, 50)}...</div>` : ''}
-            <textarea id="editor-${index}" class="text-editor ${block.isOpen ? '' : 'folded'}" 
+
+            <div class="block-preview-box ${!block.isEditMode ? 'active' : ''}" onclick="toggleEditMode(${index})">
+               ${block.content || '<span style="color:#999">(내용 없음)</span>'}
+            </div>
+
+            <textarea id="editor-${index}" class="code-editor ${block.isEditMode ? 'active' : ''}" 
               oninput="updateText(${index}, this.value)">${block.content}</textarea>
           `;
         } else {
           innerHTML += `
-            <div style="display:flex; gap:10px; align-items:center;">
-              <img src="${block.content}" class="editor-img-preview">
-              <div>
-                <span style="font-size:12px;">크기: </span>
-                <input type="number" value="${block.width || 100}" 
-                  onchange="updateImageWidth(${index}, this.value)" 
-                  style="width:50px; text-align:center;"> %
+            <div style="margin-bottom:5px; display:flex; justify-content:flex-end; gap:5px;">
+               <button class="btn-sm btn-edit-toggle" onclick="toggleEditMode(${index})">
+                 ${block.isEditMode ? '👁️ 사진만 보기' : '⚙️ 설정'}
+               </button>
+            </div>
+            <div class="${!block.isEditMode ? 'active' : ''}" style="display:${!block.isEditMode ? 'block' : 'none'}; text-align:center;">
+               <img src="${block.content}" style="max-width:100%; height:auto; border-radius:8px;">
+            </div>
+            <div class="${block.isEditMode ? 'active' : ''}" style="display:${block.isEditMode ? 'block' : 'none'};">
+              <div style="display:flex; gap:10px; align-items:center; margin-bottom:5px;">
+                 <img src="${block.content}" class="editor-img-preview">
+                 <div>
+                   <span style="font-size:12px;">너비: </span>
+                   <input type="number" value="${block.width || 100}" 
+                     onchange="updateImageWidth(${index}, this.value)" 
+                     style="width:50px; text-align:center;"> %
+                 </div>
               </div>
+              <textarea class="code-editor active" readonly>${block.content.substring(0, 100)}...</textarea>
             </div>
           `;
         }
-
         div.innerHTML = innerHTML;
         container.appendChild(div);
       });
     }
 
+    // --- 카드 렌더링 (스타일 적용) ---
     function updatePreview() {
       const cardWidth = document.getElementById('cardWidthInput').value;
       const captureArea = document.getElementById('capture-area');
       
-      let fullHtml = `<div class="card-base" style="width: ${cardWidth}px;">`;
+      // 사용자 지정 스타일 적용
+      const frameStyle = `
+        width: ${cardWidth}px;
+        padding: ${cardStyle.padding}px;
+        background: linear-gradient(235deg, ${cardStyle.color1} 0%, ${cardStyle.color2} 100%);
+        color: ${cardStyle.textColor};
+      `;
+
+      let fullHtml = `<div class="card-frame" style="${frameStyle}">`;
 
       blocks.forEach(block => {
         if (block.type === 'text') {
@@ -267,89 +359,100 @@
           `;
         }
       });
-
       fullHtml += `</div>`;
       captureArea.innerHTML = fullHtml;
     }
 
-    // --- 핵심 기능: 자르기 (Split) ---
+    // --- 기능 함수: 포장지 제거 (Strip Wrapper) ---
+    function stripWrapper(index) {
+      let content = blocks[index].content.trim();
+      
+      // 1. <div> 태그로 시작하고 </div>로 끝나는지 확인 (대소문자 무시)
+      // 아주 단순한 정규식입니다. 복잡한 중첩 구조는 아닐 거라고 가정합니다.
+      const wrapperRegex = /^<div[^>]*>([\s\S]*?)<\/div>$/i;
+      
+      const match = content.match(wrapperRegex);
+      
+      if (match) {
+        if(confirm("가장 바깥쪽 <div> 태그를 벗겨낼까요?")) {
+          // 그룹 1(알맹이)만 추출
+          blocks[index].content = match[1].trim();
+          renderBlocks();
+          updatePreview();
+        }
+      } else {
+        alert("벗겨낼 바깥쪽 <div>가 보이지 않아요.\n이미 벗겨졌거나, 형식이 다를 수 있어요.");
+      }
+    }
+
+    // --- 기능 함수: 스타일 업데이트 ---
+    function updateCardStyle() {
+      cardStyle.color1 = document.getElementById('bgColor1').value;
+      cardStyle.color2 = document.getElementById('bgColor2').value;
+      cardStyle.padding = document.getElementById('paddingRange').value;
+      cardStyle.textColor = document.getElementById('textColor').value;
+      
+      document.getElementById('paddingVal').innerText = cardStyle.padding + 'px';
+      
+      updatePreview();
+    }
+
+    function toggleStylePanel() {
+      const panel = document.getElementById('stylePanel');
+      panel.classList.toggle('open');
+    }
+
+    // --- 기존 기능 유지 ---
     function splitBlock(event, index) {
       event.preventDefault(); 
       const textarea = document.getElementById(`editor-${index}`);
       if (!textarea) return;
-
       const cursorPosition = textarea.selectionStart;
       const fullText = blocks[index].content;
-      
       const firstPart = fullText.substring(0, cursorPosition);
       const secondPart = fullText.substring(cursorPosition);
-
       blocks[index].content = firstPart;
-
-      const newBlock = { type: 'text', content: secondPart, isOpen: true };
-      blocks.splice(index + 1, 0, newBlock);
-
+      blocks[index].isEditMode = true; 
+      blocks.splice(index + 1, 0, { type: 'text', content: secondPart, isEditMode: true });
       renderBlocks(); updatePreview();
     }
-
-    // --- 핵심 기능: 풀칠하기 (Merge Up) ---
     function mergeUp(index) {
       if (index <= 0) return;
-      if (blocks[index].type !== 'text' || blocks[index-1].type !== 'text') return;
-
-      if(confirm('위쪽 텍스트 블록과 합치시겠습니까?')) {
-        // 위의 블록 내용 뒤에 현재 내용을 갖다 붙임
+      if(confirm('위쪽과 합치시겠습니까?')) {
         blocks[index-1].content += blocks[index].content;
-        
-        // 현재 블록 삭제
         blocks.splice(index, 1);
-        
         renderBlocks(); updatePreview();
       }
     }
-
-    function addTextBlock() {
-      blocks.push({ type: 'text', content: '<p>새로운 내용</p>', isOpen: true });
+    function toggleEditMode(index) { blocks[index].isEditMode = !blocks[index].isEditMode; renderBlocks(); }
+    function addTextBlock() { blocks.push({ type: 'text', content: '<p>새 문단</p>', isEditMode: true }); renderBlocks(); updatePreview(); }
+    function updateText(index, val) { blocks[index].content = val; updatePreview(); }
+    function updateImageWidth(index, val) { blocks[index].width = val; updatePreview(); }
+    function deleteBlock(index) { if (confirm('삭제?')) { blocks.splice(index, 1); renderBlocks(); updatePreview(); } }
+    function moveBlock(index, dir) {
+      const newIdx = index + dir;
+      if (newIdx < 0 || newIdx >= blocks.length) return;
+      [blocks[index], blocks[newIdx]] = [blocks[newIdx], blocks[index]];
       renderBlocks(); updatePreview();
     }
-
     document.getElementById('imgFileInput').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(event) {
-        blocks.push({ type: 'image', content: event.target.result, width: 100 });
-        renderBlocks(); updatePreview();
-        e.target.value = '';
+        blocks.push({ type: 'image', content: event.target.result, width: 100, isEditMode: false });
+        renderBlocks(); updatePreview(); e.target.value = '';
       };
       reader.readAsDataURL(file);
     });
-
-    function updateText(index, val) { blocks[index].content = val; updatePreview(); }
-    function updateImageWidth(index, val) { blocks[index].width = val; updatePreview(); }
-    function toggleFold(index) { blocks[index].isOpen = !blocks[index].isOpen; renderBlocks(); }
-    function deleteBlock(index) { if (confirm('삭제하시겠습니까?')) { blocks.splice(index, 1); renderBlocks(); updatePreview(); } }
-    
-    function moveBlock(index, direction) {
-      const newIndex = index + direction;
-      if (newIndex < 0 || newIndex >= blocks.length) return;
-      [blocks[index], blocks[newIndex]] = [blocks[newIndex], blocks[index]];
-      renderBlocks(); updatePreview();
-    }
     document.getElementById('cardWidthInput').addEventListener('input', updatePreview);
-
     function saveImage() {
       const element = document.getElementById("capture-area").firstElementChild;
-      const saveBtn = document.querySelector('.btn-save');
-      const originalText = saveBtn.innerText;
-      saveBtn.innerText = "⏳ 변환 중...";
-      htmlToImage.toPng(element, { pixelRatio: 2 })
-        .then(function (dataUrl) {
-          const link = document.createElement('a');
-          link.download = 'novel_card_' + new Date().getTime() + '.png';
-          link.href = dataUrl; link.click(); saveBtn.innerText = originalText;
-        })
-        .catch(function (error) { alert("저장 실패"); saveBtn.innerText = originalText; });
+      const btn = document.querySelector('.btn-save');
+      const txt = btn.innerText; btn.innerText = "⏳ 변환 중...";
+      htmlToImage.toPng(element, { pixelRatio: 2 }).then(function (dataUrl) {
+          const link = document.createElement('a'); link.download = 'novel_card_' + Date.now() + '.png'; link.href = dataUrl; link.click(); btn.innerText = txt;
+        }).catch(function (error) { alert("저장 실패"); btn.innerText = txt; });
     }
   </script>
 </body>
