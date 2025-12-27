@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>노블 카드 생성기 V11 (Custom Style)</title>
+  <title>노블 카드 생성기 V12 (Pro)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js"></script>
   <style>
     @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
@@ -22,7 +22,7 @@
       color: #333;
     }
 
-    /* --- 컨트롤 패널 --- */
+    /* --- 컨트롤 패널 (상단 고정) --- */
     .editor-area {
       width: 100%;
       padding: 15px;
@@ -34,7 +34,7 @@
       gap: 15px;
       position: sticky;
       top: 0;
-      max-height: 60vh;
+      max-height: 55vh; /* 에디터 영역 제한 */
       overflow-y: auto;
     }
 
@@ -47,15 +47,15 @@
       padding-bottom: 10px;
     }
 
-    /* 스타일 설정 패널 (기본 숨김) */
+    /* --- 스타일 패널 (업그레이드) --- */
     .style-panel {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       padding: 15px;
-      border-radius: 8px;
-      display: none; /* 토글로 열림 */
+      border-radius: 12px;
+      display: none;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
     .style-panel.open { display: flex; }
 
@@ -66,6 +66,51 @@
       font-size: 13px;
       font-weight: bold;
       color: #475569;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    /* 색상 입력 UI */
+    .color-input-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      padding: 4px;
+      border-radius: 6px;
+    }
+    input[type="color"] {
+      border: none;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      background: none;
+    }
+    .hex-input {
+      border: none;
+      font-family: monospace;
+      font-size: 12px;
+      width: 140px; /* rgba 입력 고려하여 넓게 */
+      outline: none;
+      color: #333;
+    }
+
+    /* 프리셋 버튼들 */
+    .preset-container {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+    .btn-preset {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      cursor: pointer;
+      flex-shrink: 0;
     }
 
     /* 블록 스타일 */
@@ -96,6 +141,7 @@
       gap: 5px;
     }
 
+    /* 버튼류 */
     .btn-sm {
       padding: 5px 8px;
       font-size: 11px;
@@ -137,21 +183,24 @@
     }
     .block-preview-box.active { display: block; }
 
+    /* 이미지 미리보기 */
     .editor-img-preview {
-      max-width: 100px;
-      max-height: 100px;
+      max-width: 80px;
+      max-height: 80px;
       border-radius: 4px;
       border: 1px solid #ddd;
     }
 
+    /* 메인 버튼 */
     button { cursor: pointer; border: none; }
     .btn-add-text { background: #334155; color: white; padding: 10px; border-radius: 8px; font-weight: bold; width: 48%; }
     .btn-add-image { background: #f59e0b; color: white; padding: 10px; border-radius: 8px; font-weight: bold; width: 48%; }
     .btn-save { background: #3b82f6; color: white; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px;}
-    .btn-style { background: #64748b; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; }
+    .btn-style { background: #64748b; color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; }
 
     #imgFileInput { display: none; }
 
+    /* --- 미리보기 영역 --- */
     .preview-container {
       padding: 40px 20px;
       width: 100%;
@@ -160,22 +209,18 @@
       justify-content: center;
       background-color: #e2e8f0;
       flex-grow: 1;
-      padding-bottom: 100px;
+      padding-bottom: 150px; /* 하단 여백 확보 */
     }
 
     #capture-area { background: transparent; transform-origin: top left; }
 
-    /* 기본 프레임 (JS로 스타일 덮어씌움) */
+    /* 통합 프레임 (동적 스타일 적용) */
     .card-frame {
       border-radius: 16px; 
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      /* 초기값 */
-      padding: 2em;
-      background: linear-gradient(235deg, #fbfdff 0%, #f1f5f9 100%);
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.20);
-      color: #0f172a;
     }
 
     .text-part p { margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all; line-height: 1.8; }
@@ -195,7 +240,7 @@
   <div class="editor-area">
     <div class="main-controls">
       <div style="display:flex; align-items:center; gap:10px;">
-        <span style="font-size: 13px; font-weight: bold;">카드 폭:</span>
+        <span style="font-size: 13px; font-weight: bold;">폭:</span>
         <input type="number" id="cardWidthInput" value="900" step="10" style="width:60px; padding:5px; border:1px solid #ccc; border-radius:4px;"> px
       </div>
       <div style="flex-grow:1"></div>
@@ -203,22 +248,46 @@
     </div>
 
     <div id="stylePanel" class="style-panel">
+      <div class="style-row" style="justify-content: flex-start; overflow-x: auto;">
+        <span>감성 프리셋:</span>
+        <div class="preset-container" id="presetList">
+          </div>
+      </div>
+
+      <div class="style-row">
+        <span>그라데이션 방향:</span>
+        <input type="range" id="gradAngle" min="0" max="360" value="235" oninput="updateCardStyle()">
+        <span id="gradAngleVal" style="width:40px; text-align:right;">235°</span>
+      </div>
+
       <div class="style-row">
         <span>배경 시작색 (위):</span>
-        <input type="color" id="bgColor1" value="#fbfdff" onchange="updateCardStyle()">
+        <div class="color-input-group">
+          <input type="color" id="bgColor1Picker" value="#fbfdff" oninput="syncColorInput('bg1', 'picker')">
+          <input type="text" id="bgColor1Text" class="hex-input" value="#fbfdff" oninput="syncColorInput('bg1', 'text')">
+        </div>
       </div>
+
       <div class="style-row">
         <span>배경 끝색 (아래):</span>
-        <input type="color" id="bgColor2" value="#f1f5f9" onchange="updateCardStyle()">
+        <div class="color-input-group">
+          <input type="color" id="bgColor2Picker" value="#f1f5f9" oninput="syncColorInput('bg2', 'picker')">
+          <input type="text" id="bgColor2Text" class="hex-input" value="#f1f5f9" oninput="syncColorInput('bg2', 'text')">
+        </div>
       </div>
-      <div class="style-row">
-        <span>여백 (Padding):</span>
-        <input type="range" id="paddingRange" min="10" max="60" value="32" oninput="updateCardStyle()">
-        <span id="paddingVal" style="font-weight:normal; width:30px; text-align:right;">32px</span>
-      </div>
+
       <div class="style-row">
         <span>글자색:</span>
-        <input type="color" id="textColor" value="#0f172a" onchange="updateCardStyle()">
+        <div class="color-input-group">
+          <input type="color" id="textColorPicker" value="#0f172a" oninput="syncColorInput('text', 'picker')">
+          <input type="text" id="textColorText" class="hex-input" value="#0f172a" oninput="syncColorInput('text', 'text')">
+        </div>
+      </div>
+
+      <div class="style-row">
+        <span>여백 (Padding):</span>
+        <input type="range" id="paddingRange" min="0" max="100" value="32" oninput="updateCardStyle()">
+        <span id="paddingVal" style="width:40px; text-align:right;">32px</span>
       </div>
     </div>
 
@@ -238,8 +307,18 @@
   </div>
 
   <script>
-    // 스타일 설정값
+    // --- 1. 상태 및 프리셋 데이터 ---
+    const presets = [
+      { name: '기본(화이트)', c1: '#fbfdff', c2: '#f1f5f9', t: '#0f172a' },
+      { name: '새벽녘(블루)', c1: '#e0f2fe', c2: '#f0f9ff', t: '#0c4a6e' },
+      { name: '피치(웜톤)', c1: '#fff1f2', c2: '#fff7ed', t: '#881337' },
+      { name: '미드나잇(다크)', c1: '#0f172a', c2: '#1e293b', t: '#f8fafc' },
+      { name: '오션(청량)', c1: '#ecfeff', c2: '#cfFAFE', t: '#164e63' },
+      { name: '종이질감', c1: '#fdfbf7', c2: '#f5f5f4', t: '#44403c' }
+    ];
+
     let cardStyle = {
+      angle: 235,
       color1: '#fbfdff',
       color2: '#f1f5f9',
       padding: 32,
@@ -249,17 +328,86 @@
     let blocks = [
       {
         type: 'text',
-        // 일부러 겉포장(div)이 있는 예시를 넣음
-        content: `<div style="background:#eee; padding:10px;">
-  <p style="font-weight:bold;">이 박스는 잘못 복사된 겉포장입니다.</p>
-  <p>'포장지 제거' 버튼을 눌러보세요.</p>
-</div>`,
-        isEditMode: false 
+        content: `<p style="font-size:1.2em; font-weight:bold;">새로운 스타일 패널을 확인해보세요!</p>
+<p>상단 '🎨 스타일 꾸미기'를 누르면 그라데이션 각도, 색상 코드 입력, 감성 프리셋을 사용할 수 있습니다.</p>`,
+        isEditMode: true // 처음엔 수정 모드로
       }
     ];
 
-    window.onload = function() { renderBlocks(); updatePreview(); }
+    // --- 2. 초기화 ---
+    window.onload = function() { 
+      initPresets();
+      renderBlocks(); 
+      updatePreview(); 
+    }
 
+    // --- 3. 스타일 관련 로직 ---
+    function initPresets() {
+      const container = document.getElementById('presetList');
+      presets.forEach(p => {
+        const btn = document.createElement('div');
+        btn.className = 'btn-preset';
+        btn.style.background = `linear-gradient(135deg, ${p.c1}, ${p.c2})`;
+        btn.title = p.name;
+        btn.onclick = () => applyPreset(p);
+        container.appendChild(btn);
+      });
+    }
+
+    function applyPreset(p) {
+      // 값 업데이트
+      document.getElementById('bgColor1Picker').value = p.c1;
+      document.getElementById('bgColor1Text').value = p.c1;
+      document.getElementById('bgColor2Picker').value = p.c2;
+      document.getElementById('bgColor2Text').value = p.c2;
+      document.getElementById('textColorPicker').value = p.t;
+      document.getElementById('textColorText').value = p.t;
+      
+      // 스타일 적용
+      syncColorInput('bg1', 'text');
+      syncColorInput('bg2', 'text');
+      syncColorInput('text', 'text');
+    }
+
+    // 색상 인풋 동기화 (Picker <-> Text)
+    function syncColorInput(target, source) {
+      let pickerId, textId, value;
+      
+      if (target === 'bg1') { pickerId = 'bgColor1Picker'; textId = 'bgColor1Text'; }
+      else if (target === 'bg2') { pickerId = 'bgColor2Picker'; textId = 'bgColor2Text'; }
+      else { pickerId = 'textColorPicker'; textId = 'textColorText'; }
+
+      if (source === 'picker') {
+        value = document.getElementById(pickerId).value;
+        document.getElementById(textId).value = value;
+      } else {
+        value = document.getElementById(textId).value;
+        // Hex 코드일 경우에만 피커에 반영 (rgba는 피커가 못받음)
+        if(value.startsWith('#') && (value.length === 4 || value.length === 7)) {
+          document.getElementById(pickerId).value = value;
+        }
+      }
+      updateCardStyle();
+    }
+
+    function updateCardStyle() {
+      cardStyle.angle = document.getElementById('gradAngle').value;
+      cardStyle.color1 = document.getElementById('bgColor1Text').value;
+      cardStyle.color2 = document.getElementById('bgColor2Text').value;
+      cardStyle.padding = document.getElementById('paddingRange').value;
+      cardStyle.textColor = document.getElementById('textColorText').value;
+
+      document.getElementById('gradAngleVal').innerText = cardStyle.angle + '°';
+      document.getElementById('paddingVal').innerText = cardStyle.padding + 'px';
+      
+      updatePreview();
+    }
+
+    function toggleStylePanel() {
+      document.getElementById('stylePanel').classList.toggle('open');
+    }
+
+    // --- 4. 블록 렌더링 (버그 수정 핵심!) ---
     function renderBlocks() {
       const container = document.getElementById('block-list');
       container.innerHTML = '';
@@ -285,13 +433,12 @@
         `;
 
         if (block.type === 'text') {
+          // ★ 수정: onmousedown -> onclick으로 변경하고 이벤트 처리 확실하게
           innerHTML += `
             <div style="margin-bottom:5px; display:flex; justify-content:flex-end; gap:5px; flex-wrap:wrap;">
                ${block.isEditMode ? `<button class="btn-sm btn-strip" onclick="stripWrapper(${index})">📦 포장지 제거</button>` : ''}
-               
                ${canMergeUp ? `<button class="btn-sm btn-merge" onclick="mergeUp(${index})">🧴 풀칠</button>` : ''}
-               ${block.isEditMode ? `<button class="btn-sm btn-split" onmousedown="splitBlock(event, ${index})">✂️ 자르기</button>` : ''}
-               
+               ${block.isEditMode ? `<button class="btn-sm btn-split" onclick="splitBlock(event, ${index})">✂️ 자르기</button>` : ''}
                <button class="btn-sm btn-edit-toggle" onclick="toggleEditMode(${index})">
                  ${block.isEditMode ? '👁️ 미리보기(완료)' : '✏️ 코드수정(펼치기)'}
                </button>
@@ -305,6 +452,7 @@
               oninput="updateText(${index}, this.value)">${block.content}</textarea>
           `;
         } else {
+          // 이미지 블록
           innerHTML += `
             <div style="margin-bottom:5px; display:flex; justify-content:flex-end; gap:5px;">
                <button class="btn-sm btn-edit-toggle" onclick="toggleEditMode(${index})">
@@ -324,16 +472,24 @@
                      style="width:50px; text-align:center;"> %
                  </div>
               </div>
-              <textarea class="code-editor active" readonly>${block.content.substring(0, 100)}...</textarea>
+              <textarea class="code-editor active" readonly>${block.content.substring(0, 50)}...</textarea>
             </div>
           `;
         }
         div.innerHTML = innerHTML;
         container.appendChild(div);
       });
+      
+      // 렌더링 후 텍스트 에디터 값 강제 동기화 (버그 방지)
+      blocks.forEach((block, idx) => {
+        if (block.type === 'text') {
+           const textarea = document.getElementById(`editor-${idx}`);
+           if (textarea) textarea.value = block.content;
+        }
+      });
     }
 
-    // --- 카드 렌더링 (스타일 적용) ---
+    // --- 5. 최종 미리보기 ---
     function updatePreview() {
       const cardWidth = document.getElementById('cardWidthInput').value;
       const captureArea = document.getElementById('capture-area');
@@ -342,7 +498,7 @@
       const frameStyle = `
         width: ${cardWidth}px;
         padding: ${cardStyle.padding}px;
-        background: linear-gradient(235deg, ${cardStyle.color1} 0%, ${cardStyle.color2} 100%);
+        background: linear-gradient(${cardStyle.angle}deg, ${cardStyle.color1} 0%, ${cardStyle.color2} 100%);
         color: ${cardStyle.textColor};
       `;
 
@@ -363,78 +519,84 @@
       captureArea.innerHTML = fullHtml;
     }
 
-    // --- 기능 함수: 포장지 제거 (Strip Wrapper) ---
+    // --- 6. 핵심 기능 함수들 ---
+
+    // 텍스트 업데이트 (가장 중요)
+    function updateText(index, val) {
+      blocks[index].content = val;
+      updatePreview();
+    }
+
+    // 자르기 기능 (버그 수정됨)
+    function splitBlock(event, index) {
+      // 버튼 클릭 등으로 인한 포커스 이동 방지
+      event.preventDefault(); 
+      
+      const textarea = document.getElementById(`editor-${index}`);
+      if (!textarea) return;
+
+      // 현재 에디터의 최신 내용을 가져옴 (중요)
+      const currentContent = textarea.value;
+      const cursorPosition = textarea.selectionStart;
+
+      // 자르기 수행
+      const firstPart = currentContent.substring(0, cursorPosition);
+      const secondPart = currentContent.substring(cursorPosition);
+
+      // 데이터 갱신
+      blocks[index].content = firstPart;
+      blocks[index].isEditMode = true; // 앞부분도 수정 모드 유지
+
+      // 뒷부분 블록 생성
+      const newBlock = { 
+        type: 'text', 
+        content: secondPart, 
+        isEditMode: true // 새 블록도 수정 모드로 시작
+      };
+
+      // 배열 삽입
+      blocks.splice(index + 1, 0, newBlock);
+
+      // 전체 다시 그리기
+      renderBlocks(); 
+      updatePreview();
+    }
+
+    function mergeUp(index) {
+      if (index <= 0) return;
+      if(confirm('위쪽 내용과 합치시겠습니까?')) {
+        blocks[index-1].content += blocks[index].content;
+        blocks.splice(index, 1);
+        renderBlocks(); 
+        updatePreview();
+      }
+    }
+
+    function toggleEditMode(index) {
+      blocks[index].isEditMode = !blocks[index].isEditMode;
+      renderBlocks();
+    }
+
     function stripWrapper(index) {
       let content = blocks[index].content.trim();
-      
-      // 1. <div> 태그로 시작하고 </div>로 끝나는지 확인 (대소문자 무시)
-      // 아주 단순한 정규식입니다. 복잡한 중첩 구조는 아닐 거라고 가정합니다.
       const wrapperRegex = /^<div[^>]*>([\s\S]*?)<\/div>$/i;
-      
       const match = content.match(wrapperRegex);
-      
       if (match) {
-        if(confirm("가장 바깥쪽 <div> 태그를 벗겨낼까요?")) {
-          // 그룹 1(알맹이)만 추출
+        if(confirm("가장 바깥쪽 <div> 태그를 제거할까요?")) {
           blocks[index].content = match[1].trim();
           renderBlocks();
           updatePreview();
         }
       } else {
-        alert("벗겨낼 바깥쪽 <div>가 보이지 않아요.\n이미 벗겨졌거나, 형식이 다를 수 있어요.");
+        alert("제거할 바깥쪽 <div>가 감지되지 않습니다.");
       }
     }
 
-    // --- 기능 함수: 스타일 업데이트 ---
-    function updateCardStyle() {
-      cardStyle.color1 = document.getElementById('bgColor1').value;
-      cardStyle.color2 = document.getElementById('bgColor2').value;
-      cardStyle.padding = document.getElementById('paddingRange').value;
-      cardStyle.textColor = document.getElementById('textColor').value;
-      
-      document.getElementById('paddingVal').innerText = cardStyle.padding + 'px';
-      
-      updatePreview();
-    }
-
-    function toggleStylePanel() {
-      const panel = document.getElementById('stylePanel');
-      panel.classList.toggle('open');
-    }
-
-    // --- 기존 기능 유지 ---
-    function splitBlock(event, index) {
-      event.preventDefault(); 
-      const textarea = document.getElementById(`editor-${index}`);
-      if (!textarea) return;
-      const cursorPosition = textarea.selectionStart;
-      const fullText = blocks[index].content;
-      const firstPart = fullText.substring(0, cursorPosition);
-      const secondPart = fullText.substring(cursorPosition);
-      blocks[index].content = firstPart;
-      blocks[index].isEditMode = true; 
-      blocks.splice(index + 1, 0, { type: 'text', content: secondPart, isEditMode: true });
+    function addTextBlock() {
+      blocks.push({ type: 'text', content: '<p>새로운 문단</p>', isEditMode: true });
       renderBlocks(); updatePreview();
     }
-    function mergeUp(index) {
-      if (index <= 0) return;
-      if(confirm('위쪽과 합치시겠습니까?')) {
-        blocks[index-1].content += blocks[index].content;
-        blocks.splice(index, 1);
-        renderBlocks(); updatePreview();
-      }
-    }
-    function toggleEditMode(index) { blocks[index].isEditMode = !blocks[index].isEditMode; renderBlocks(); }
-    function addTextBlock() { blocks.push({ type: 'text', content: '<p>새 문단</p>', isEditMode: true }); renderBlocks(); updatePreview(); }
-    function updateText(index, val) { blocks[index].content = val; updatePreview(); }
-    function updateImageWidth(index, val) { blocks[index].width = val; updatePreview(); }
-    function deleteBlock(index) { if (confirm('삭제?')) { blocks.splice(index, 1); renderBlocks(); updatePreview(); } }
-    function moveBlock(index, dir) {
-      const newIdx = index + dir;
-      if (newIdx < 0 || newIdx >= blocks.length) return;
-      [blocks[index], blocks[newIdx]] = [blocks[newIdx], blocks[index]];
-      renderBlocks(); updatePreview();
-    }
+
     document.getElementById('imgFileInput').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -445,14 +607,37 @@
       };
       reader.readAsDataURL(file);
     });
+
+    function updateImageWidth(index, val) { blocks[index].width = val; updatePreview(); }
+    
+    function deleteBlock(index) { if (confirm('삭제하시겠습니까?')) { blocks.splice(index, 1); renderBlocks(); updatePreview(); } }
+    
+    function moveBlock(index, dir) {
+      const newIdx = index + dir;
+      if (newIdx < 0 || newIdx >= blocks.length) return;
+      [blocks[index], blocks[newIdx]] = [blocks[newIdx], blocks[index]];
+      renderBlocks(); updatePreview();
+    }
+
     document.getElementById('cardWidthInput').addEventListener('input', updatePreview);
+
     function saveImage() {
       const element = document.getElementById("capture-area").firstElementChild;
       const btn = document.querySelector('.btn-save');
-      const txt = btn.innerText; btn.innerText = "⏳ 변환 중...";
-      htmlToImage.toPng(element, { pixelRatio: 2 }).then(function (dataUrl) {
-          const link = document.createElement('a'); link.download = 'novel_card_' + Date.now() + '.png'; link.href = dataUrl; link.click(); btn.innerText = txt;
-        }).catch(function (error) { alert("저장 실패"); btn.innerText = txt; });
+      const txt = btn.innerText; 
+      btn.innerText = "⏳ 고화질 변환 중...";
+      htmlToImage.toPng(element, { pixelRatio: 2 })
+        .then(function (dataUrl) {
+          const link = document.createElement('a'); 
+          link.download = 'novel_card_' + Date.now() + '.png'; 
+          link.href = dataUrl; 
+          link.click(); 
+          btn.innerText = txt;
+        })
+        .catch(function (error) { 
+          alert("저장 실패 (메모리 부족 가능성)"); 
+          btn.innerText = txt; 
+        });
     }
   </script>
 </body>
