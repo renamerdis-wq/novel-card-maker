@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>카드 생성기</title>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #e2e8f0;
+      font-family: Pretendard, sans-serif;
+      /* 모바일에서 스크롤 되더라도 내용은 중앙에 오게 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* 저장 버튼 스타일 */
+    .save-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+      cursor: pointer;
+      z-index: 1000;
+      transition: transform 0.1s;
+    }
+    .save-btn:active {
+      transform: translateX(-50%) scale(0.95);
+    }
+
+    /* 모바일 화면이 좁아도 카드는 원본 비율(900px)을 유지해야 함.
+       화면 밖으로 삐져나가도 스크롤해서 보면 되니까 width를 고정함.
+    */
+    .card-wrapper {
+      width: 900px; /* 고정 너비 중요! */
+      margin-bottom: 80px; /* 버튼 가리지 않게 여백 */
+      transform-origin: top left;
+    }
+
+    /* 네가 짠 원본 디자인 (수정 X) */
+    .card-container {
+      padding: 2em;
+      color: #0f172a;
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.5;
+      letter-spacing: 0em;
+      box-sizing: border-box;
+      border-radius: 16px;
+      background: linear-gradient(235deg, #fbfdff 0%, #f1f5f9 100%);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.20);
+    }
+    
+    /* 모바일 미리보기용 반응형 처리 (옵션) 
+       폰에서 볼 때 너무 크면 불편하니까 화면에 맞춰 축소해서 보여줌.
+       실제 저장될 때는 원본 크기로 저장됨.
+    */
+    @media (max-width: 920px) {
+      .card-wrapper {
+        transform: scale(calc(100vw / 940)); /* 화면 너비에 맞춰 축소 */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <button class="save-btn" onclick="saveImage()">📸 이미지로 저장하기</button>
+
+  <div id="capture-area" class="card-wrapper">
+    <div class="card-container">
+      <div style="margin-bottom: 1.5em; padding: 1.5em; background: #f8fafc; border-radius: 16px;">
+        <div style="text-align: left; margin-bottom: 0.75em;"><span style="display: inline-block; padding: 6px 14px; background: #0f172a; color: #f5f5f5; border-radius: 20px; font-size: 0.8em; font-weight: 700; letter-spacing: 0.02em;">강철호</span></div>
+        <p style="margin: 0; font-size: 1.8em; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; text-align: left;">볼륨 8: 유리 구두를 벗은 아침</p>
+        <div style="margin-top: 1em; text-align: left;"><span style="display: inline-block; margin: 0 8px 8px 0; padding: 6.00px 12.00px; border-radius: 20px; font-size: 0.750em; font-weight: 600; line-height: 1.2; text-align: center; box-sizing: border-box; background: #334155; color: #fff;">챕터 1: 낯선 욕실의 온기</span></div>
+      </div>
+      <div style="line-height: 1.7;">
+        <p style="margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all;">자다 일어난 부스스한 머리, 민낯, 그리고 밤사이 부어오른 얼굴. 남들 앞에선 철저하게 감추고 싶을 그 무방비한 모습이 철호의 눈에는 오히려 인간적이고 안쓰럽게 비칠 뿐이었다. 그는 레나가 어색해하지 않도록 짐짓 시선을 옷걸이 쪽으로 돌리며 덤덤하게 대꾸했다.</p>
+        <p style="margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all;"><span style="color: #0ea5e9; background: #e0f2fe; padding: 0.1em 0.4em; border-radius: 4px;">“죄송할 거 없다. 내가 아는 백화점 놈들은 어차피 이 시간에도 물건 나르느라 깨어 있다. 전화 한 통 때리는 게 뭐 그리 대수라고.”</span></p>
+        <p style="margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all;"><span style="color: #0ea5e9; background: #e0f2fe; padding: 0.1em 0.4em; border-radius: 4px;">“안에 들어가면 세면대 위에 칫솔이랑 세안 도구 새 걸로 싹 깔아놨다. 수건도 호텔 수건보다 두꺼운 걸로 채워놨으니까 맘껏 쓰고. 샴푸, 린스, 바디워시… 여자가 뭘 쓰는지 몰라가 향기 좋은 거는 다 사다 놨으니까 골라 쓰면 된다.”</span></p>
+        <p style="margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all;"><span style="color: #0ea5e9; background: #e0f2fe; padding: 0.1em 0.4em; border-radius: 4px;">“일나라. 부축해 줄게.”</span></p>
+        <p style="margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all;">슬라이딩 도어를 열자, 은은한 조명이 켜진 욕실 내부가 드러났다. 대리석으로 마감된 널찍한 공간, 창밖으로 바다 풍경이 보이는 대형 월풀 욕조, 그리고 가지런히 정리된 최고급 어메니티들. 그것은 하룻밤의 피신처가 아니라, 그녀가 다시 여왕처럼 고개를 들고 세상으로 나갈 수 있게 돕는 준비실 같았다.</p>
+        <p style="margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all;"><span style="color: #0ea5e9; background: #e0f2fe; padding: 0.1em 0.4em; border-radius: 4px;">“천천히 씻고 나온나. 애들은 그 사이에 내가 세수시키고 밥 먹이고 있을 테니까 신경 끄고.”</span></p>
+        <p style="margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all;">철호는 그제야 침대에 남아 뒹굴고 있는 아이들에게로 고개를 돌렸다. 녀석들은 벌써 새 옷의 포장을 뜯고 싶어 엉덩이가 들썩거리고 있었다.</p>
+        <p style="margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all;"><span style="color: #0ea5e9; background: #e0f2fe; padding: 0.1em 0.4em; border-radius: 4px;">“자, 꼬맹이들. 엄마 예쁘게 변신할 동안 우리는 남자들끼리 조용히 식사 준비나 해볼까.”</span></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function saveImage() {
+      const element = document.getElementById("capture-area");
+      
+      // 모바일에서도 고화질을 유지하기 위해 scale 옵션을 2로 설정
+      html2canvas(element, {
+        scale: 2, 
+        backgroundColor: null, // 투명 배경 지원
+        useCORS: true // 외부 폰트/이미지 로딩 허용
+      }).then(canvas => {
+        // 캔버스를 이미지 URL로 변환
+        const image = canvas.toDataURL("image/png");
+
+        // 가상의 링크를 만들어 다운로드 트리거
+        const link = document.createElement("a");
+        link.href = image;
+        link.download = "novel_card.png";
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>
