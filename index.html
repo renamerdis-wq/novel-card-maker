@@ -1,9 +1,9 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>노블 카드 생성기 V3 (Final)</title>
+  <title>노블 카드 생성기 V6 (Final)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js"></script>
   <style>
     @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
@@ -22,7 +22,6 @@
       color: #333;
     }
 
-    /* --- 컨트롤 패널 --- */
     .control-panel {
       width: 100%;
       padding: 20px;
@@ -38,13 +37,14 @@
 
     .input-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     textarea {
       width: 100%;
-      height: 100px;
+      height: 150px;
       padding: 10px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
@@ -57,23 +57,32 @@
       padding: 10px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
-      width: 80px;
+      width: 60px;
+      text-align: center;
+      font-size: 13px;
     }
 
     button {
-      padding: 10px 15px;
+      padding: 10px 12px;
       border: none;
       border-radius: 8px;
       font-weight: 700;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
     }
 
+    .btn-upload { background-color: #f59e0b; color: white; }
+    .btn-delete { background-color: #ef4444; color: white; } /* 빨간색 삭제 버튼 */
     .btn-apply { background-color: #334155; color: white; }
-    .btn-save { background-color: #3b82f6; color: white; flex-grow: 1; }
+    .btn-save { background-color: #3b82f6; color: white; width: 100%; margin-top: 5px; font-size: 15px; padding: 12px; }
 
-    /* --- 미리보기 영역 --- */
+    #imgFileInput { display: none; }
+
     .preview-container {
       padding: 40px 20px;
       width: 100%;
@@ -88,31 +97,61 @@
       background: transparent;
       transform-origin: top left;
     }
+
+    /* 이미지 스타일 */
+    .inserted-image-container {
+      margin: 1.5em 0;
+      text-align: center;
+    }
+    .inserted-image {
+      display: inline-block;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* 라벨 텍스트 */
+    .label-text { font-size: 12px; font-weight: bold; color: #64748b; }
   </style>
 </head>
 <body>
 
   <div class="control-panel">
+    <input type="file" id="imgFileInput" accept="image/*">
+
+    <div class="input-row">
+      <span class="label-text">크기:</span>
+      <input type="number" id="imgWidthInput" value="100" min="10" max="100">
+      <span class="label-text">%</span>
+      
+      <button class="btn-upload" onclick="triggerUpload()">🖼️ 추가</button>
+      <button class="btn-delete" onclick="removeLastImage()">🗑️ 삭제</button>
+    </div>
+
+    <div class="input-row" style="margin-top:5px; border-top: 1px dashed #e2e8f0; padding-top:10px;">
+       <span class="label-text">카드 폭:</span>
+       <input type="number" id="cardWidthInput" value="900" step="10">
+       <div style="flex-grow:1"></div>
+       <button class="btn-apply" onclick="applyHtml()">🔄 적용</button>
+    </div>
+
     <textarea id="htmlInput" placeholder="HTML 코드를 입력하세요...">
 <div style="padding: 2em; color: #0f172a; font-size: 15px; font-weight: 500; line-height: 1.8; border-radius: 16px; background: linear-gradient(235deg, #fbfdff 0%, #f1f5f9 100%); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.20)">
   <div style="margin-bottom: 1.5em; padding: 1.5em; background: #f8fafc; border-radius: 16px;">
-    <p style="margin: 0; font-size: 1.2em; font-weight: 800; color: #0f172a; text-align: left;">형광펜 테스트 V3</p>
+    <p style="margin: 0; font-size: 1.2em; font-weight: 800; color: #0f172a; text-align: left;">삭제 버튼 추가됨!</p>
   </div>
   
-  <p style="margin: 0 0 1.5em 0; text-align: justify; word-break: keep-all;">
+  <p>이제 사진을 잘못 넣어도 버튼 하나로 지울 수 있습니다.</p>
+
+  <p>
     <span style="-webkit-box-decoration-break: clone; box-decoration-break: clone; color: #0ea5e9; background: #e0f2fe; padding: 2px 6px; border-radius: 4px;">
-      “이제는 줄이 바뀌어도 배경색이 떡지지 않고, 줄마다 예쁘게 끊어져서 저장될 겁니다. 엔진을 바꿨거든요.”
+      “입력창 코드를 건드리지 않아도 됩니다!”
     </span>
   </p>
 </div>
     </textarea>
     
-    <div class="input-row">
-      <span>너비(px):</span>
-      <input type="number" id="widthInput" value="900" step="10">
-      <button class="btn-apply" onclick="applyHtml()">🔄 적용</button>
-      <button class="btn-save" onclick="saveImage()">📸 저장</button>
-    </div>
+    <button class="btn-save" onclick="saveImage()">📸 카드 저장하기</button>
   </div>
 
   <div class="preview-container">
@@ -120,14 +159,82 @@
   </div>
 
   <script>
+    const htmlInput = document.getElementById('htmlInput');
+    const fileInput = document.getElementById('imgFileInput');
+    const imgWidthInput = document.getElementById('imgWidthInput');
+
     window.onload = function() { applyHtml(); }
 
     function applyHtml() {
-      const htmlCode = document.getElementById('htmlInput').value;
-      const widthVal = document.getElementById('widthInput').value;
+      const htmlCode = htmlInput.value;
+      const cardWidth = document.getElementById('cardWidthInput').value;
       const captureArea = document.getElementById('capture-area');
       captureArea.innerHTML = htmlCode;
-      captureArea.style.width = widthVal + "px";
+      captureArea.style.width = cardWidth + "px";
+    }
+
+    function triggerUpload() {
+      fileInput.click();
+    }
+
+    // 사진 삭제 기능 (핵심!)
+    function removeLastImage() {
+      const content = htmlInput.value;
+      
+      // 우리가 넣은 이미지 태그 형태를 찾습니다 (<div class="inserted-image-container">...</div>)
+      // 정규식으로 찾는데, 여러 줄에 걸쳐 있어도 찾을 수 있게 설정했습니다.
+      const regex = /<div class="inserted-image-container">[\s\S]*?<\/div>/g;
+      const matches = content.match(regex);
+
+      if (matches && matches.length > 0) {
+        // 가장 마지막에 있는 이미지 태그를 찾음
+        const lastMatch = matches[matches.length - 1];
+        
+        // 전체 내용에서 그 마지막 태그가 있는 위치를 찾아서 잘라냄
+        const lastIndex = content.lastIndexOf(lastMatch);
+        
+        const newContent = content.substring(0, lastIndex) + 
+                           content.substring(lastIndex + lastMatch.length);
+        
+        htmlInput.value = newContent;
+        applyHtml(); // 미리보기 갱신
+        alert("방금 넣은 사진을 삭제했습니다! 🗑️");
+      } else {
+        alert("삭제할 사진이 없습니다.");
+      }
+    }
+
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const base64String = event.target.result;
+        const userWidth = imgWidthInput.value; 
+
+        // 이미지 태그 생성
+        const imgTag = `\n<div class="inserted-image-container"><img src="${base64String}" class="inserted-image" style="width: ${userWidth}%;"></div>\n`;
+        
+        insertAtCursor(htmlInput, imgTag);
+        applyHtml();
+        fileInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function insertAtCursor(myField, myValue) {
+      if (myField.selectionStart || myField.selectionStart == '0') {
+        var startPos = myField.selectionStart;
+        var endPos = myField.selectionEnd;
+        myField.value = myField.value.substring(0, startPos)
+          + myValue
+          + myField.value.substring(endPos, myField.value.length);
+        myField.selectionStart = startPos + myValue.length;
+        myField.selectionEnd = startPos + myValue.length;
+      } else {
+        myField.value += myValue;
+      }
     }
 
     function saveImage() {
@@ -137,8 +244,6 @@
       
       saveBtn.innerText = "⏳ 변환 중...";
 
-      // html-to-image 라이브러리 사용
-      // pixelRatio: 2 -> 2배 고화질 설정
       htmlToImage.toPng(element, { pixelRatio: 2 })
         .then(function (dataUrl) {
           const link = document.createElement('a');
@@ -148,8 +253,8 @@
           saveBtn.innerText = originalText;
         })
         .catch(function (error) {
-          console.error('oops, something went wrong!', error);
-          alert("저장에 실패했습니다. (아이폰이라면 잠시 후 다시 시도해보세요)");
+          console.error('Error:', error);
+          alert("저장 실패! (메모리 부족일 수 있어요)");
           saveBtn.innerText = originalText;
         });
     }
